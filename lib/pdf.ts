@@ -1,7 +1,11 @@
+const WORKER_URL =
+  "https://unpkg.com/pdfjs-dist@6.0.227/build/pdf.worker.min.mjs";
+
 export async function extractTextFromPDF(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.0.227/pdf.worker.min.mjs";
+
+  // unpkg mirrors npm directly so the worker URL is always available
+  pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
