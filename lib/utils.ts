@@ -13,6 +13,23 @@ export interface StageComplete {
   summary?: string;
 }
 
+export interface MemoryItem {
+  id: string;
+  type: "fact" | "preference" | "emotion" | "experience" | "goal";
+  content: string;
+  timestamp: number;
+  sourceStage: string;
+  importance: number; // 1-5
+}
+
+export interface ResumeVersion {
+  id: string;
+  version: number;
+  content: string;
+  suggestions: string;
+  date: string;
+}
+
 /**
  * Parse structured data markers from AI response.
  * Supports:
@@ -57,6 +74,43 @@ export function parseMarkers(text: string): {
  * Truncate conversation history for token management.
  * Keeps the most recent N messages, plus a system summary of older ones.
  */
+/**
+ * Parse MEMORY markers from AI response.
+ *   %%%MEMORY{...json...}%%%
+ */
+export function parseMemoryMarker(text: string): {
+  cleanText: string;
+  memories: MemoryItem[];
+} {
+  let cleanText = text;
+  const memories: MemoryItem[] = [];
+
+  const regex = /%%%MEMORY\s*([\s\S]*?)%%%/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    try {
+      const data = JSON.parse(match[1].trim());
+      if (Array.isArray(data.memories)) {
+        for (const m of data.memories) {
+          memories.push({
+            id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+            type: m.type || "fact",
+            content: m.content || "",
+            timestamp: Date.now(),
+            sourceStage: m.sourceStage || "unknown",
+            importance: m.importance || 1,
+          });
+        }
+      }
+    } catch {
+      // ignore invalid JSON
+    }
+    cleanText = cleanText.replace(match[0], "").trim();
+  }
+
+  return { cleanText, memories };
+}
+
 export function truncateHistory(
   messages: { role: string; content: string }[],
   maxCount: number = 20

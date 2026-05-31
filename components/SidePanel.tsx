@@ -37,10 +37,11 @@ export default function SidePanel({ open, onClose }: SidePanelProps) {
             </button>
           </div>
           <div className="sidebar-body">
-            <ProfileSection />
             <ProgressSection />
+            <DirectionSection />
+            <ResumeSection />
+            <InterviewReviewSection />
             <ApplicationSection />
-            <InterviewSection />
             <MoodSection />
             <DataSection />
           </div>
@@ -50,59 +51,7 @@ export default function SidePanel({ open, onClose }: SidePanelProps) {
   );
 }
 
-function ProfileSection() {
-  const profile = useCareerStore((s) => s.profile);
-  const hasData = Object.keys(profile).length > 0;
-
-  return (
-    <div className="sidebar-section">
-      <h4>👤 个人档案</h4>
-      {!hasData ? (
-        <div className="empty-state">开始对话后自动收集</div>
-      ) : (
-        <div style={{ fontSize: 13, lineHeight: 1.8 }}>
-          {profile.education && (
-            <div>
-              <span style={{ color: "#888" }}>学历：</span>
-              {profile.education}
-            </div>
-          )}
-          {profile.major && (
-            <div>
-              <span style={{ color: "#888" }}>专业：</span>
-              {profile.major}
-            </div>
-          )}
-          {profile.grade && (
-            <div>
-              <span style={{ color: "#888" }}>年级：</span>
-              {profile.grade}
-            </div>
-          )}
-          {profile.cityPreference && (
-            <div>
-              <span style={{ color: "#888" }}>目标城市：</span>
-              {profile.cityPreference}
-            </div>
-          )}
-          {profile.personality && (
-            <div>
-              <span style={{ color: "#888" }}>性格特点：</span>
-              {profile.personality}
-            </div>
-          )}
-          {profile.values && profile.values.length > 0 && (
-            <div>
-              <span style={{ color: "#888" }}>职业价值观：</span>
-              {profile.values.join("、")}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
+/* ===== 求职进度 ===== */
 function ProgressSection() {
   const stageProgress = useCareerStore((s) => s.stageProgress);
 
@@ -126,7 +75,7 @@ function ProgressSection() {
           <div
             style={{
               height: "100%",
-              width: `${((completedCount + (activeCount > 0 ? 0 : 0)) / total) * 100}%`,
+              width: `${(completedCount / total) * 100}%`,
               background: "linear-gradient(90deg, #52c41a, #1677ff)",
               borderRadius: 4,
               transition: "width 0.5s ease",
@@ -164,6 +113,179 @@ function ProgressSection() {
   );
 }
 
+/* ===== 意向岗位 ===== */
+function DirectionSection() {
+  const exploration = useCareerStore((s) => s.exploration);
+  const jobMatch = useCareerStore((s) => s.jobMatch);
+
+  const hasDirections = exploration.directions && exploration.directions.length > 0;
+  const hasJobMatch = jobMatch.targetPosition || jobMatch.jdText;
+
+  if (!hasDirections && !hasJobMatch) {
+    return (
+      <div className="sidebar-section">
+        <h4>🎯 意向岗位</h4>
+        <div className="empty-state">在对话中探索方向后自动展示</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sidebar-section">
+      <h4>🎯 意向岗位</h4>
+      {hasDirections && (
+        <div style={{ marginBottom: 8 }}>
+          {exploration.directions.map((dir, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: i === exploration.selectedDirection ? "#e6f4ff" : "#fafafa",
+                border: i === exploration.selectedDirection ? "1px solid #91caff" : "1px solid #f0f0f0",
+                marginBottom: 6,
+                fontSize: 13,
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>{dir.title}</div>
+              <div style={{ color: "#666", fontSize: 12 }}>{dir.matchReason}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {hasJobMatch && (
+        <div
+          style={{
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#fff7e6",
+            border: "1px solid #ffd591",
+            fontSize: 13,
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{jobMatch.targetPosition}</div>
+          {jobMatch.gapAnalysis && (
+            <div style={{ color: "#666", fontSize: 12 }}>{jobMatch.gapAnalysis}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== 简历迭代记录 ===== */
+function ResumeSection() {
+  const resumeHistory = useCareerStore((s) => s.resumeHistory);
+
+  return (
+    <div className="sidebar-section">
+      <h4>📝 简历迭代记录</h4>
+      {resumeHistory.length === 0 ? (
+        <div className="empty-state">
+          上传简历后，AI 会给出修改建议
+          <div style={{ fontSize: 12, color: "#bbb", marginTop: 4 }}>
+            每次修改建议会自动保存为版本记录
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[...resumeHistory].reverse().map((v) => (
+            <div
+              key={v.id}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: "#fafafa",
+                border: "1px solid #f0f0f0",
+                fontSize: 13,
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 4, color: "#1677ff" }}>
+                v{v.version}
+              </div>
+              <div style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>
+                {v.date}
+              </div>
+              <div style={{ color: "#666", fontSize: 12, whiteSpace: "pre-wrap" }}>
+                {v.suggestions.length > 100 ? v.suggestions.slice(0, 100) + "…" : v.suggestions}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== 模拟面试记录 ===== */
+function InterviewReviewSection() {
+  const interview = useCareerStore((s) => s.interview);
+  const review = useCareerStore((s) => s.review);
+
+  const typeLabel: Record<string, string> = {
+    individual: "单面",
+    group: "群面",
+    case: "Case",
+    technical: "技术面",
+  };
+
+  return (
+    <div className="sidebar-section">
+      <h4>🎤 模拟面试记录</h4>
+      {interview.history.length === 0 && !review.analysis ? (
+        <div className="empty-state">进行模拟面试后，记录和复盘建议会展示在这里</div>
+      ) : (
+        <>
+          {interview.history.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>面试记录</div>
+              {interview.history.map((round, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    background: "#fafafa",
+                    border: "1px solid #f0f0f0",
+                    marginBottom: 6,
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                    第 {round.round} 轮 · {typeLabel[round.type] || round.type}
+                  </div>
+                  <div style={{ color: "#666", fontSize: 12, whiteSpace: "pre-wrap" }}>
+                    {round.feedback.length > 120
+                      ? round.feedback.slice(0, 120) + "…"
+                      : round.feedback}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {review.analysis && (
+            <div
+              style={{
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: "#f6ffed",
+                border: "1px solid #b7eb8f",
+                fontSize: 13,
+              }}
+            >
+              <div style={{ fontWeight: 600, marginBottom: 4, color: "#52c41a" }}>
+                复盘总结
+              </div>
+              <div style={{ color: "#666", fontSize: 12 }}>{review.analysis}</div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ===== 投递追踪 ===== */
 function ApplicationSection() {
   const applications = useCareerStore((s) => s.applications);
   const addApplication = useCareerStore((s) => s.addApplication);
@@ -194,6 +316,14 @@ function ApplicationSection() {
     rejected: "未通过",
   };
 
+  const statusColors: Record<string, string> = {
+    preparing: "#d9d9d9",
+    submitted: "#1677ff",
+    interview: "#faad14",
+    offer: "#52c41a",
+    rejected: "#ff4d4f",
+  };
+
   const nextStatus: Record<string, string> = {
     preparing: "submitted",
     submitted: "interview",
@@ -208,68 +338,101 @@ function ApplicationSection() {
       {applications.length === 0 && !showForm && (
         <div className="empty-state">暂无投递记录</div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {applications.map((app) => (
-          <div
-            key={app.id}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 8,
-              background: "#fafafa",
-              border: "1px solid #f0f0f0",
-              fontSize: 13,
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{app.company}</div>
-            <div style={{ color: "#666", marginBottom: 6 }}>{app.position}</div>
+
+      {/* Timeline view */}
+      {applications.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          {applications.map((app, i) => (
             <div
+              key={app.id}
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                gap: 12,
+                marginBottom: 12,
+                position: "relative",
               }}
             >
-              <span
+              {/* Timeline line */}
+              {i < applications.length - 1 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 8,
+                    top: 24,
+                    bottom: -12,
+                    width: 2,
+                    background: "#f0f0f0",
+                  }}
+                />
+              )}
+              {/* Dot */}
+              <div
                 style={{
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                  fontSize: 11,
-                  background:
-                    app.status === "offer"
-                      ? "#f6ffed"
-                      : app.status === "rejected"
-                      ? "#fff2f0"
-                      : "#e6f4ff",
-                  color:
-                    app.status === "offer"
-                      ? "#52c41a"
-                      : app.status === "rejected"
-                      ? "#ff4d4f"
-                      : "#1677ff",
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  border: `3px solid ${statusColors[app.status]}`,
+                  background: "#fff",
+                  flexShrink: 0,
+                  marginTop: 2,
                 }}
-              >
-                {statusLabels[app.status]}
-              </span>
-              <button
-                onClick={() =>
-                  updateApplication(app.id, { status: nextStatus[app.status] as AppType["status"] })
-                }
-                style={{
-                  background: "none",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  fontSize: 11,
-                  cursor: "pointer",
-                  color: "#666",
-                }}
-              >
-                推进
-              </button>
+              />
+              {/* Content */}
+              <div style={{ flex: 1, fontSize: 13 }}>
+                <div style={{ fontWeight: 600 }}>{app.company}</div>
+                <div style={{ color: "#666", marginBottom: 4 }}>{app.position}</div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      background:
+                        app.status === "offer"
+                          ? "#f6ffed"
+                          : app.status === "rejected"
+                          ? "#fff2f0"
+                          : app.status === "interview"
+                          ? "#fffbe6"
+                          : app.status === "submitted"
+                          ? "#e6f4ff"
+                          : "#fafafa",
+                      color: statusColors[app.status],
+                    }}
+                  >
+                    {statusLabels[app.status]}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#bbb" }}>{app.date}</span>
+                </div>
+                <button
+                  onClick={() =>
+                    updateApplication(app.id, { status: nextStatus[app.status] as AppType["status"] })
+                  }
+                  style={{
+                    marginTop: 4,
+                    background: "none",
+                    border: "1px solid #d9d9d9",
+                    borderRadius: 4,
+                    padding: "2px 8px",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    color: "#666",
+                  }}
+                >
+                  推进
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
       {showForm ? (
         <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
           <input
@@ -350,69 +513,7 @@ function ApplicationSection() {
   );
 }
 
-function InterviewSection() {
-  const interview = useCareerStore((s) => s.interview);
-  const currentStage = useCareerStore((s) => s.currentStage);
-  const sendMessage = useCareerStore((s) => s.sendMessage);
-  const addMessage = useCareerStore((s) => s.addMessage);
-
-  const typeLabel: Record<string, string> = {
-    individual: "单面",
-    group: "群面",
-    case: "Case",
-    technical: "技术面",
-  };
-  const styleLabel: Record<string, string> = {
-    gentle: "温和",
-    stress: "压力",
-  };
-
-  const handleStart = () => {
-    addMessage(
-      "system",
-      `开始模拟面试：${typeLabel[interview.type]}（${styleLabel[interview.style]}风格）`
-    );
-    setTimeout(() => {
-      sendMessage(`开始模拟面试，类型：${typeLabel[interview.type]}，风格：${styleLabel[interview.style]}`);
-    }, 100);
-  };
-
-  return (
-    <div className="sidebar-section">
-      <h4>🎯 模拟面试</h4>
-      <div style={{ fontSize: 13, marginBottom: 8 }}>
-        <div style={{ color: "#888", marginBottom: 4 }}>
-          类型：{typeLabel[interview.type]}
-        </div>
-        <div style={{ color: "#888", marginBottom: 8 }}>
-          风格：{styleLabel[interview.style]}
-        </div>
-        {currentStage !== "interview" && (
-          <div style={{ fontSize: 12, color: "#faad14", marginBottom: 8 }}>
-            💡 先完成前序阶段再开始面试
-          </div>
-        )}
-      </div>
-      <button
-        onClick={handleStart}
-        disabled={currentStage !== "interview"}
-        style={{
-          width: "100%",
-          padding: "8px",
-          background: currentStage === "interview" ? "#1677ff" : "#d9d9d9",
-          color: "#fff",
-          border: "none",
-          borderRadius: 6,
-          fontSize: 13,
-          cursor: currentStage === "interview" ? "pointer" : "not-allowed",
-        }}
-      >
-        {currentStage === "interview" ? "开始面试" : "未到面试阶段"}
-      </button>
-    </div>
-  );
-}
-
+/* ===== 心情记录 ===== */
 function MoodSection() {
   const moodEntries = useCareerStore((s) => s.moodEntries);
   const addMoodEntry = useCareerStore((s) => s.addMoodEntry);
@@ -522,6 +623,7 @@ function MoodSection() {
   );
 }
 
+/* ===== 数据管理 ===== */
 function DataSection() {
   const exportData = useCareerStore((s) => s.exportData);
   const importData = useCareerStore((s) => s.importData);

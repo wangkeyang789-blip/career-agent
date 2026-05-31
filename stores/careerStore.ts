@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Stage, STAGE_ORDER, STAGE_LABELS, parseMarkers } from "@/lib/utils";
+import { Stage, STAGE_ORDER, STAGE_LABELS, parseMarkers, parseMemoryMarker, MemoryItem, ResumeVersion } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -69,6 +69,8 @@ export interface Application {
   notes?: string;
 }
 
+export type ActiveMode = "career" | "resume-review" | "interview";
+
 interface MoodEntry {
   date: string;
   mood: number; // 1-5
@@ -107,7 +109,17 @@ interface CareerState {
   applications: Application[];
   moodEntries: MoodEntry[];
 
+  // Mode switching
+  activeMode: ActiveMode;
+
+  // Memory & history
+  memory: MemoryItem[];
+  resumeHistory: ResumeVersion[];
+
   // Actions
+  setActiveMode: (mode: ActiveMode) => void;
+  addMemory: (entry: Omit<MemoryItem, "id" | "timestamp">) => void;
+  addResumeVersion: (version: Omit<ResumeVersion, "id">) => void;
   addMessage: (role: "user" | "assistant" | "system", content: string) => void;
   sendMessage: (text: string) => Promise<void>;
   uploadResume: (file: File) => Promise<void>;
@@ -129,7 +141,15 @@ function generateId(): string {
 }
 
 const INITIAL_PROMPT =
-  "你好！我是你的 AI 求职助理 🎯\n\n我可以帮你完成求职全流程：从探索职业方向、匹配岗位、准备简历和求职信，到模拟面试和面试复盘。\n\n你可以直接上传你的简历（PDF），我来帮你自动读取信息；也可以像聊天一样，逐步告诉我你的情况。";
+  "你好呀 👋 我是你的 AI 求职伙伴，也是这段路上的倾听者。\n\n我可以在这些方面帮你：\n" +
+  "• **求职方向探索** — 帮你梳理自己的优势和兴趣，找到适合的方向\n" +
+  "• **简历优化** — 一起打磨简历，让你的经历更打动面试官\n" +
+  "• **模拟面试** — 针对特定岗位做面试练习，给真实的反馈\n" +
+  "• **岗位匹配** — 帮你分析职位要求，评估匹配度\n" +
+  "• **投递管理** — 记录投递进度，提醒你跟进\n\n" +
+  "当然，求职路上有时候也会迷茫、焦虑，这都很正常。你可以随时跟我聊聊你的感受，\n" +
+  "我会一直在这。\n\n" +
+  "你可以直接上传简历（PDF），我来帮你读取信息；也可以像聊天一样，告诉我你的情况。";
 
 export const useCareerStore = create<CareerState>()(
   persist(
@@ -162,6 +182,9 @@ export const useCareerStore = create<CareerState>()(
       review: { suggestions: [] },
       applications: [],
       moodEntries: [],
+      activeMode: "career",
+      memory: [],
+      resumeHistory: [],
 
       addMessage: (role, content) => {
         set((state) => ({
@@ -206,11 +229,13 @@ export const useCareerStore = create<CareerState>()(
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               stage: currentState.currentStage,
+              mode: currentState.activeMode,
               messages: currentState.messages.map((m) => ({
                 role: m.role,
                 content: m.content,
               })),
               state: stateContext,
+              memory: currentState.memory.slice(-20),
               userMessage: text,
             }),
           });
@@ -226,9 +251,17 @@ export const useCareerStore = create<CareerState>()(
           // Parse markers
           const { cleanText, data: stageData, complete } = parseMarkers(aiText);
 
+          // Parse memory markers
+          const { cleanText: textAfterMemory, memories } = parseMemoryMarker(cleanText);
+          if (memories.length > 0) {
+            for (const mem of memories) {
+              get().addMemory(mem);
+            }
+          }
+
           // Add AI response
           const store = get();
-          store.addMessage("assistant", cleanText || "(AI 正在思考...)");
+          store.addMessage("assistant", (memories.length > 0 ? textAfterMemory : cleanText) || "(AI 正在思考...)");
 
           // Update state from STAGE_DATA
           if (stageData) {
@@ -304,7 +337,7 @@ export const useCareerStore = create<CareerState>()(
           return;
         }
 
-        get().addMessage("system", "已收到你的简历，正在读取信息...");
+        get().addMessage("system", "收到你的简历，正在解析...");
 
         try {
           const { extractTextFromPDF } = await import("@/lib/pdf");
@@ -315,11 +348,59 @@ export const useCareerStore = create<CareerState>()(
             return;
           }
 
-          await get().sendMessage(
-            `这是我的简历，请帮我提取相关信息：\n\n${resumeText}`
-          );
-        } catch {
-          set({ error: "简历解析失败，请确认文件是有效的 PDF 格式" });
+          // Silent analysis: send to AI without showing raw text in chat
+          const currentState = get();
+          const stateContext = {
+            profile: currentState.profile,
+            exploration: currentState.exploration,
+            jobMatch: currentState.jobMatch,
+          };
+
+          set({ isWaiting: true });
+
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              stage: currentState.currentStage,
+              mode: "resume-parse",
+              messages: currentState.messages.slice(-10).map((m) => ({
+                role: m.role,
+                content: m.content,
+              })),
+              state: stateContext,
+              userMessage: `用户上传了一份简历(PDF)，请解析以下内容并提取结构化信息：\n\n${resumeText}`,
+            }),
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `请求失败 (${response.status})`);
+          }
+
+          const data = await response.json();
+          const aiText = data.content || "";
+
+          // Parse STAGE_DATA for profile updates
+          const parsed = parseMarkers(aiText);
+          const memResult = parseMemoryMarker(parsed.cleanText);
+
+          const profileData = parsed.data?.profile;
+          if (profileData) {
+            set((s) => ({ profile: { ...s.profile, ...(profileData as Profile) } }));
+          }
+          for (const mem of memResult.memories) {
+            get().addMemory(mem);
+          }
+
+          // Show only the clean summary to user
+          const summary = memResult.cleanText || "已读取你的简历，信息已自动保存。";
+          get().addMessage("assistant", summary);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "简历解析失败，请确认文件是有效的 PDF 格式";
+          set({ error: message });
+        } finally {
+          set({ isWaiting: false });
         }
       },
 
@@ -337,6 +418,31 @@ export const useCareerStore = create<CareerState>()(
       addMoodEntry: (entry) =>
         set((s) => ({
           moodEntries: [...s.moodEntries, entry].slice(-100),
+        })),
+
+      setActiveMode: (mode) => set({ activeMode: mode }),
+
+      addMemory: (entry) =>
+        set((s) => ({
+          memory: [
+            ...s.memory,
+            {
+              ...entry,
+              id: generateId(),
+              timestamp: Date.now(),
+            },
+          ].slice(-200),
+        })),
+
+      addResumeVersion: (version) =>
+        set((s) => ({
+          resumeHistory: [
+            ...s.resumeHistory,
+            {
+              ...version,
+              id: generateId(),
+            },
+          ],
         })),
 
       exportData: () => {
@@ -393,6 +499,7 @@ export const useCareerStore = create<CareerState>()(
           materials: {},
           interview: { type: "individual" as const, style: "gentle" as const, history: [] },
           review: { suggestions: [] },
+          activeMode: "career",
           error: null,
           isWaiting: false,
         }));
@@ -409,7 +516,10 @@ export const useCareerStore = create<CareerState>()(
         moodEntries: state.moodEntries,
         stageProgress: state.stageProgress,
         currentStage: state.currentStage,
-        messages: state.messages.slice(-50), // Keep last 50 messages
+        activeMode: state.activeMode,
+        memory: state.memory.slice(-200),
+        resumeHistory: state.resumeHistory,
+        messages: state.messages.slice(-50),
       }),
     }
   )

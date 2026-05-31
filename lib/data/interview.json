@@ -1,0 +1,182 @@
+[
+  {
+    "role": "产品经理",
+    "questions": [
+      {
+        "type": "behavioral",
+        "question": "请分享一个你主导的产品项目，从需求到上线的完整过程",
+        "expectedPoints": ["需求来源和优先级判断", "设计决策和权衡", "跨团队协作", "上线效果和数据", "复盘和改进"]
+      },
+      {
+        "type": "product_sense",
+        "question": "如果让你设计一个面向大学生的求职产品，你会怎么做？",
+        "expectedPoints": ["目标用户分析", "核心功能定义", "差异化定位", "MVP 范围", "增长策略"]
+      },
+      {
+        "type": "estimation",
+        "question": "估算一下北京每天有多少人坐地铁",
+        "expectedPoints": ["拆解思路清晰", "假设合理", "能做交叉验证", "注意量纲"]
+      },
+      {
+        "type": "data_analysis",
+        "question": "某功能上线后用户使用率低于预期，怎么排查原因？",
+        "expectedPoints": ["数据拆解（曝光→点击→使用）", "用户调研验证假设", "竞品对比", "A/B 测试验证"]
+      },
+      {
+        "type": "analytical",
+        "question": "你最喜欢的产品是什么？为什么？怎么改进？",
+        "expectedPoints": ["产品理解深度", "改进建议的可行性", "分析框架"]
+      }
+    ]
+  },
+  {
+    "role": "数据分析师",
+    "questions": [
+      {
+        "type": "sql",
+        "question": "有一张用户行为表 user_actions(user_id, action_type, action_time)，请写出SQL：统计每天活跃用户数、每个用户的平均操作次数",
+        "expectedPoints": ["DATE 提取日期", "COUNT(DISTINCT) 求活跃用户", "子查询或窗口函数求平均"]
+      },
+      {
+        "type": "business",
+        "question": "某电商平台月活跃用户下降了 10%，请分析可能原因",
+        "expectedPoints": ["内部分析（新用户减少/老用户流失）", "渠道分析", "竞品分析", "季节性因素", "数据验证方向"]
+      },
+      {
+        "type": "statistics",
+        "question": "AB 测试中，实验组转化率 5.2%，对照组 4.8%，样本量各 10000，这个结果显著吗？",
+        "expectedPoints": ["显著性检验方法", "P 值概念", "样本量是否足够", "实际显著性 vs 统计显著性"]
+      },
+      {
+        "type": "sql",
+        "question": "有订单表 orders(order_id, user_id, amount, create_time)，求每个用户的首单金额和最近一次购买时间",
+        "expectedPoints": ["ROW_NUMBER 窗口函数", "MIN/MAX 聚合"]
+      },
+      {
+        "type": "analytical",
+        "question": "某功能上线后整体数据上涨了，但细分渠道看都在下降，这是什么现象？",
+        "expectedPoints": ["辛普森悖论", "数据拆解方法", "混杂变量识别"]
+      }
+    ]
+  },
+  {
+    "role": "后端开发",
+    "questions": [
+      {
+        "type": "algorithm",
+        "question": "设计一个 LRU Cache（最近最少使用缓存）",
+        "expectedPoints": ["HashMap + 双向链表", "O(1) 时间复杂度的 get/put", "考虑并发安全"]
+      },
+      {
+        "type": "system_design",
+        "question": "设计一个短链接生成系统",
+        "expectedPoints": ["哈希算法", "发号器方案", "重定向流程", "性能考虑", "过期策略"]
+      },
+      {
+        "type": "database",
+        "question": "MySQL 中一个查询很慢，怎么排查和优化？",
+        "expectedPoints": ["EXPLAIN 分析执行计划", "索引优化", "慢查询日志", "查询重写", "分库分表考量"]
+      },
+      {
+        "type": "concurrency",
+        "question": "高并发场景下如何保证库存扣减不超卖？",
+        "expectedPoints": ["乐观锁/悲观锁", "Redis 原子操作", "消息队列异步削峰", "最终一致性"]
+      },
+      {
+        "type": "design",
+        "question": "说说你参与过的一个系统架构设计",
+        "expectedPoints": ["业务背景", "技术选型依据", "架构图", "难点和解决方案", "可扩展性"]
+      }
+    ]
+  },
+  {
+    "role": "前端开发",
+    "questions": [
+      {
+        "type": "js",
+        "question": "手写 Promise.all",
+        "expectedPoints": ["Promise 基础", "异步处理", "错误处理", "边界情况"]
+      },
+      {
+        "type": "react",
+        "question": "React 中 useEffect 的依赖数组是空的、不传、有依赖，三种情况分别什么时候执行？",
+        "expectedPoints": ["空数组：只 mount 和 unmount", "不传：每次渲染", "有依赖：依赖变化时", "闭包陷阱"]
+      },
+      {
+        "type": "css",
+        "question": "如何实现一个居中的自适应正方形？",
+        "expectedPoints": ["aspect-ratio", "padding-bottom 百分比", "flex/grid 居中", "viewBox"]
+      },
+      {
+        "type": "perf",
+        "question": "页面加载慢怎么优化？说出一条完整的优化链路",
+        "expectedPoints": ["网络优化（CDN、压缩）", "资源优化（懒加载、代码分割）", "渲染优化（虚拟列表、防抖节流）", "缓存策略"]
+      },
+      {
+        "type": "engineering",
+        "question": "前端工程化中你做过哪些提升效率的事情？",
+        "expectedPoints": ["组件库建设", "CI/CD 流程", "代码规范（ESLint/Prettier）", "自动化测试"]
+      }
+    ]
+  },
+  {
+    "role": "UI/UX 设计师",
+    "questions": [
+      {
+        "type": "portfolio",
+        "question": "选一个你最满意项目，走一遍你的设计流程",
+        "expectedPoints": ["用户研究", "信息架构", "原型迭代", "视觉设计", "开发落地", "效果验证"]
+      },
+      {
+        "type": "design_thinking",
+        "question": "设计一个老年人使用的打车 APP 首页",
+        "expectedPoints": ["用户痛点分析", "简化交互", "大字/语音", "安全设计", "无障碍"]
+      },
+      {
+        "type": "visual",
+        "question": "如何保证产品设计的一致性？",
+        "expectedPoints": ["设计规范/Design System", "组件库", "设计评审", "UI Kit 维护"]
+      },
+      {
+        "type": "collab",
+        "question": "和产品经理/开发意见不合时怎么办？",
+        "expectedPoints": ["用数据和用户说话", "设计方案要有理有据", "妥协但不失原则", "合作共赢思维"]
+      },
+      {
+        "type": "ux",
+        "question": "怎么评估一个设计的好坏？",
+        "expectedPoints": ["可用性测试", "任务完成率", "用户满意度", "业务指标转化", "NPS"]
+      }
+    ]
+  },
+  {
+    "role": "运营",
+    "questions": [
+      {
+        "type": "case",
+        "question": "策划一个提升用户留存的活动方案",
+        "expectedPoints": ["活动目标定义", "目标用户", "活动机制设计", "预期效果", "数据追踪"]
+      },
+      {
+        "type": "data",
+        "question": "某渠道获取的用户留存率很低，怎么办？",
+        "expectedPoints": ["渠道质量分析", "用户画像匹配度", "落地页优化", "渠道策略调整", "ROI 评估"]
+      },
+      {
+        "type": "content",
+        "question": "你写过最 successful 的一篇内容是什么？为什么效果好？",
+        "expectedPoints": ["选题策略", "内容质量", "分发渠道", "数据表现", "可复用的方法论"]
+      },
+      {
+        "type": "strategy",
+        "question": "社群不活跃了怎么激活？",
+        "expectedPoints": ["分层运营（KOL/KOC）", "活动刺激", "内容供给", "积分/激励机制", "线下活动"]
+      },
+      {
+        "type": "growth",
+        "question": "产品冷启动阶段你会怎么做用户增长？",
+        "expectedPoints": ["种子用户获取", "口碑裂变", "内容营销", "渠道合作", "数据驱动迭代"]
+      }
+    ]
+  }
+]

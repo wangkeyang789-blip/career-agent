@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import StageIndicator from "@/components/StageIndicator";
 import ChatView from "@/components/ChatView";
 import SidePanel from "@/components/SidePanel";
 import InterviewConfig from "@/components/InterviewConfig";
 import { useCareerStore } from "@/stores/careerStore";
-import { STAGE_LABELS, STAGE_ORDER } from "@/lib/utils";
 
 export default function Home() {
   const currentStage = useCareerStore((s) => s.currentStage);
   const interviewConfig = useCareerStore((s) => s.interview);
-  const stageProgress = useCareerStore((s) => s.stageProgress);
   const setStage = useCareerStore((s) => s.setStage);
   const addMessage = useCareerStore((s) => s.addMessage);
   const sendMessage = useCareerStore((s) => s.sendMessage);
@@ -53,7 +50,7 @@ export default function Home() {
       {/* Header */}
       <div className="chat-header" style={{ position: "relative" }}>
         <h1>AI Career Agent</h1>
-        <p>{STAGE_LABELS[currentStage]}</p>
+        <p>你的求职伙伴与职业向导</p>
 
         <div className="header-actions" style={{ display: "flex", gap: 8 }}>
           <button
@@ -88,9 +85,6 @@ export default function Home() {
           </button>
         </div>
       </div>
-
-      {/* Stage indicator */}
-      <StageIndicator />
 
       {/* Interview config (only show in interview stage) */}
       {currentStage === "interview" && (
