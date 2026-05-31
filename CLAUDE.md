@@ -20,18 +20,19 @@ career-agent/
 │   └── api/chat/route.ts   # AI API 代理（隐藏密钥）
 ├── components/
 │   ├── ChatView.tsx        # 对话列表
-│   ├── ChatInput.tsx       # 输入框
+│   ├── ChatInput.tsx       # 输入框（含 PDF 上传按钮）
 │   ├── MessageBubble.tsx   # 消息气泡
 │   ├── StageIndicator.tsx  # 阶段进度条
 │   ├── SidePanel.tsx       # 侧边栏（档案/进度/投递/心情）
 │   └── InterviewConfig.tsx # 面试配置器
 ├── stores/
-│   └── careerStore.ts      # 全局状态管理
+│   └── careerStore.ts      # 全局状态管理（含简历上传）
 ├── lib/
+│   ├── pdf.ts              # PDF 文字提取（pdfjs-dist）
 │   ├── utils.ts            # 工具函数（标记解析、阶段定义）
 │   ├── prompts.ts          # 提示词加载
 ├── prompts/                # <<< 核心：AI 行为定义 >>>
-│   ├── 1-connect.md        # 阶段1：了解用户
+│   ├── 1-connect.md        # 阶段1：了解用户（支持简历解析）
 │   ├── 2-explore.md        # 阶段2：方向探索
 │   ├── 3-match.md          # 阶段3：岗位匹配
 │   ├── 4-prepare.md        # 阶段4：材料准备
@@ -39,6 +40,14 @@ career-agent/
 │   └── 6-review.md         # 阶段6：复盘进化
 └── .env.example            # 环境变量模板
 ```
+
+## 功能说明
+
+### 简历上传
+- 用户在 connect 阶段可上传 PDF 简历
+- AI 自动解析教育背景、实习经历等信息
+- 也支持纯对话方式逐步填写信息
+- PDF 解析在浏览器端完成，不上传文件到服务器
 
 ## 如何修改 AI 行为
 
@@ -71,6 +80,7 @@ ANTHROPIC_API_KEY=sk-ant-你的密钥
 3. 在 Vercel 控制台设置 `ANTHROPIC_API_KEY` 环境变量
 
 ## 约定
-- 不改动 `prompts/` 以外的文件
+- 核心 AI 行为在 `prompts/` 中定义
+- PDF 解析逻辑在 `lib/pdf.ts` 中维护
 - 数据自动保存在浏览器 localStorage，导出备份以防丢失
 - 每次修改 prompts 后重启 `npm run dev` 才能看到效果

@@ -110,6 +110,7 @@ interface CareerState {
   // Actions
   addMessage: (role: "user" | "assistant" | "system", content: string) => void;
   sendMessage: (text: string) => Promise<void>;
+  uploadResume: (file: File) => Promise<void>;
   setStage: (stage: Stage) => void;
   updateProfile: (data: Partial<Profile>) => void;
   updateExploration: (data: Partial<Exploration>) => void;
@@ -128,7 +129,7 @@ function generateId(): string {
 }
 
 const INITIAL_PROMPT =
-  "你好！我是你的 AI 求职助理 🎯\n\n我可以帮你完成求职全流程：从探索职业方向、匹配岗位、准备简历和求职信，到模拟面试和面试复盘。\n\n让我们从了解你开始吧！请告诉我你的学历和专业是什么？";
+  "你好！我是你的 AI 求职助理 🎯\n\n我可以帮你完成求职全流程：从探索职业方向、匹配岗位、准备简历和求职信，到模拟面试和面试复盘。\n\n你可以直接上传你的简历（PDF），我来帮你自动读取信息；也可以像聊天一样，逐步告诉我你的情况。";
 
 export const useCareerStore = create<CareerState>()(
   persist(
@@ -291,6 +292,35 @@ export const useCareerStore = create<CareerState>()(
           }
           return { currentStage: stage, stageProgress: newProgress };
         });
+      },
+
+      uploadResume: async (file: File) => {
+        const state = get();
+        if (state.isWaiting) return;
+
+        // Validate file type
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+          set({ error: "请上传 PDF 格式的简历文件" });
+          return;
+        }
+
+        get().addMessage("system", "已收到你的简历，正在读取信息...");
+
+        try {
+          const { extractTextFromPDF } = await import("@/lib/pdf");
+          const resumeText = await extractTextFromPDF(file);
+
+          if (!resumeText.trim()) {
+            set({ error: "无法读取简历内容，请确认文件不是扫描件或图片" });
+            return;
+          }
+
+          await get().sendMessage(
+            `这是我的简历，请帮我提取相关信息：\n\n${resumeText}`
+          );
+        } catch {
+          set({ error: "简历解析失败，请确认文件是有效的 PDF 格式" });
+        }
       },
 
       updateProfile: (data) => set((s) => ({ profile: { ...s.profile, ...data } })),

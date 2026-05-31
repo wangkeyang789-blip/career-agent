@@ -10,6 +10,7 @@ export default function ChatView() {
   const isWaiting = useCareerStore((s) => s.isWaiting);
   const error = useCareerStore((s) => s.error);
   const sendMessage = useCareerStore((s) => s.sendMessage);
+  const uploadResume = useCareerStore((s) => s.uploadResume);
   const clearError = useCareerStore((s) => s.clearError);
 
   const listRef = useRef<HTMLDivElement>(null);
@@ -72,7 +73,7 @@ export default function ChatView() {
       )}
 
       <div className="chat-input-area">
-        <ChatInput onSend={handleSend} disabled={isWaiting} />
+        <ChatInput onSend={handleSend} onUpload={uploadResume} disabled={isWaiting} />
       </div>
     </>
   );
